@@ -1,0 +1,342 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>reveal.js</title>
+
+    <link rel="stylesheet" href="dist/reset.css">
+    <link rel="stylesheet" href="dist/reveal.css">
+    <link rel="stylesheet" href="dist/theme/white.css">
+    <link rel="stylesheet" href="plugin/chalkboard/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href="plugin/highlight/monokai.css">
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### Low latency tuning intro
+                  
+                  * Non-uniform memory architecture (NUMA)
+                  * Minimizing jitter
+                  * Userspace networking (EFVI)
+
+                  Note:
+                  Reducing latency/overhead is relevant because we can calculate
+                  a better price in the same amnt of time, or reduce the time it takes
+                  to publish the price
+
+                  on these topics i need to explain first the defaults, to then
+                  show the reasoning behind the changes we do
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### Unified memory architecture
+                  ![](img/uma.png)
+
+                  Note:
+                  This is what the memory layout looks for devices with a single CPU
+                  like your desktop pc
+                  *hanging off the io controller is pci-e*
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### NON-Uniform memory architecture
+                  ![](img/numa.png)
+
+                  Note:
+                  This is what the memory layout looks for devices with multiple CPUs
+                  like servers
+
+                  *io controller would be attached to each memory controller*
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ![](img/server.jpg)
+
+                  Note:
+                  What a server looks like.
+		  Show CPU, memory, nic, disks, numa nodes.
+                  Draw path of IP packet. (cross-numa)
+                  Mention interconnect.
+                  Mention we put everything in the OS in the slow node
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ![](img/server-latency.jpg)
+
+                  Note:
+                  Going over the interconnect costs 60ns! or 66% extra<sup>[1](https://www.intel.com/content/www/us/en/developer/articles/tool/intelr-memory-latency-checker.html)</sup>
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                ![](img/bandwidth-server.jpg)
+
+                Note:
+                while the latency is only 60% higher, throughput is hit by 72%
+                the interconnect has approx 45GB bandwidth limit, and it's shared by pci-e
+
+          </textarea>
+        </section>
+        <section>
+          <section data-markdown data-separator-notes="Note:">
+            <textarea data-template>
+                    ## Dealing with NUMA
+
+                    * PCI-e bus locality
+                    * Process <-> memory locality
+
+                    Note:
+                    we enforce minimal amount of cross-node communication, or keep
+                    only slow components on a path that has to cross the interconnect
+            </textarea>
+          </section>
+          <section data-markdown>
+            <textarea data-template>
+                    ![](img/server.jpg)
+            </textarea>
+          </section>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### Low latency tuning intro
+                  
+                  * ~Non-uniform memory architecture (NUMA)~
+                  * Minimizing jitter
+                  * Userspace networking (EFVI)
+
+                  Note:
+                  that's it for NUMA, moving on to jitter
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ## Minimizing jitter
+
+                  * Core isolation
+                  * IRQ Affinity
+                  * Huge pages
+
+
+
+  Note:
+
+  Divided in 3 sub-topics.
+  Jitter: Unwanted variance in timing or expected performance
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### Process scheduling
+                  ![](img/no-cpu_pinning.png)
+                  Note:
+
+
+                  * By default, the scheduler will move processes around
+		    * higher total system throughput
+		    * at the cost of peak performance for any single process
+                    * Cache + data locality implications, interrupted = jitter
+
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### Core isolation
+                  ![](img/cpu_pinning.png)
+                  Note:
+                  * Pinning a single process to a core ensures no interruption + no movement
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### IRQ Load balancing
+                  ![](img/irq_balance.png)
+                  Note:
+                  * Hardware will generate an 'interrupt' == notification to the kernel on most events
+                    * the kernel has to account for it and do something
+                  * By default the interrupts will be load-balanced across all cores to ensure fairness
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### IRQ Steering
+                  ![](img/irq_balance_steering.png)
+                  Note:
+                  * Steering all IRQs to one core will ensure the others don't have
+                    context switches, of course it will deteriorate perf on the sacrifical core
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### How memory mapping works
+                  ![](./img/virtual-physical-map.png)
+
+                  Note:
+		  For this topic, I'll show a bunch of diagrams with a lot of detail.
+		  The details are not important, you should try to focus only on the idea.
+
+                  While applications see a unified, contiguous memory layout
+                  it's not the case. the physical memory is shared
+                  there is a translation layer, called virtual memory
+
+                  This translation (virtual memory) needs bookkeepping
+                  it is done via a 4 level pointer structure called "page table"
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### Memory mapping: Page table
+                  ![](./img/pt.svg)
+
+                  Note:
+
+                  the page table structure is not important, only that it takes 4 
+                  *random* memory accesses to locate a physical page
+
+                  this happens on _every_ memory access
+
+                  which is 360-600ns
+
+                Page Global Directory (PGD)
+                Page Upper Directory (PUD)
+                Page Middle Directory (PMD)
+                Page Table Entry directory (PTE)
+
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### Memory mapping: TLB
+                  ![](./img/tlb.png)
+
+                  Note:
+                  To prevent those 4 random accesses on every page table lookup
+                  there's the TLB (translation lookaside buffer) which is basically
+                  a cache of the virtual address -> physical address mapping
+
+                  the TLB is *hardware* and has limited capacity for entries, it can fit
+		  about 1500 pages.
+
+		  The default page size on x86 is 4KB -> 6MB working set memory
+                  -> if you can use larger pages, you can cover a bigger region of
+                  the physical space with the same amount of entries
+
+
+          </textarea>
+        </section>
+
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### Memory mapping: Huge pages
+
+                  * Pages are 2MB or 1GB instead of 4KB
+
+                  Note:
+
+                  * Significantly fewer allocation requests to the kernel
+                  * the biggest reason is to alleviate the TLB
+                  * 1500 pages x 4kb = 6MB, 1500 pages x 2MB = 3GB
+                  * Pinned to the same NUMA node
+
+          </textarea>
+        </section>
+
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### Low latency tuning intro
+                  
+                  * ~Non-uniform memory architecture (NUMA)~
+                  * ~Minimizing jitter~
+                  * Userspace networking (EFVI)
+
+                  Note:
+                  that's it for jitter, moving on to userspace networking
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ## Standard networking
+                  ![](./img/kernelspace.svg)
+
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ## Userspace networking
+
+                  ![](./img/userspace.svg)
+
+
+                  Note:
+                  In contrast:
+                  * No interrupts (dma to userspace)
+                  * Hugepages
+                  by avoiding the kernel space network and having the card
+                  DMA into a user buffer, we can avoid having to block on
+                  a syscall per packet
+
+                  Cons: As there are no interrupts, the process needs to poll by itself
+                  the shared buffer
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ## Conclusions
+
+                  * Resource scheduling / allocation
+                  * Consistency 
+                  Note:
+
+                  Working with the architecture to minimize overhead, at the cost of
+		  efficiently utilizing resources
+          </textarea>
+        </section>
+      </div>
+    </div>
+
+    <script src="dist/reveal.js"></script>
+    <script src="plugin/notes/notes.js"></script>
+    <script src="plugin/markdown/markdown.js"></script>
+    <script src="plugin/highlight/highlight.js"></script>
+    <script src="plugin/chalkboard/plugin.js"></script>
+    <script>
+      // More info about initialization & config:
+      // - https://revealjs.com/initialization/
+      // - https://revealjs.com/config/
+      Reveal.initialize({
+        hash: true,
+        center: false,
+        controls: true,
+        chalkboard: { // font-awesome.min.css must be available
+          src: "chalkboard/chalkboard.json",
+          storage: "chalkboard-demo",
+          boardmarkerWidth: 7,
+          toggleChalkboardButton: { left: "60px" },
+          toggleNotesButton: { left: "100px" },
+          colorButtons: 6,
+          boardmarkers : [
+                  { color: 'rgba(50,50,50,1)', cursor: 'url(' + path + 'img/boardmarker-black.png), auto'},
+                  { color: '#10FDEC', cursor: 'url(' + path + 'img/boardmarker-blue.png), auto'},
+                  { color: '#10FD6D', cursor: 'url(' + path + 'img/boardmarker-red.png), auto'},
+                  { color: '#F1FD10', cursor: 'url(' + path + 'img/boardmarker-green.png), auto'},
+                  { color: '#FF003B', cursor: 'url(' + path + 'img/boardmarker-orange.png), auto'},
+                  { color: 'rgba(150,0,20150,1)', cursor: 'url(' + path + 'img/boardmarker-purple.png), auto'},
+          ],
+        },
+
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [ RevealMarkdown, RevealHighlight, RevealNotes, RevealChalkboard, ]
+      });
+    </script>
+  </body>
+</html>
