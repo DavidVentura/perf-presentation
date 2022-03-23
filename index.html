@@ -20,6 +20,17 @@
       <div class="slides">
         <section data-markdown data-separator-notes="Note:">
           <textarea data-template>
+                  # Low latency tuning intro
+                  
+                  Note:
+                  Reducing latency/overhead is relevant because we can calculate
+                  a better price in the same amnt of time, or reduce the time it takes
+                  to publish the price
+
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
                   ### Low latency tuning intro
                   
                   * Non-uniform memory architecture (NUMA)
@@ -27,9 +38,6 @@
                   * Userspace networking (EFVI)
 
                   Note:
-                  Reducing latency/overhead is relevant because we can calculate
-                  a better price in the same amnt of time, or reduce the time it takes
-                  to publish the price
 
                   on these topics i need to explain first the defaults, to then
                   show the reasoning behind the changes we do
@@ -317,6 +325,7 @@
         hash: true,
         center: false,
         controls: true,
+        transition: 'none',
         chalkboard: { // font-awesome.min.css must be available
           src: "chalkboard/chalkboard.json",
           storage: "chalkboard-demo",
