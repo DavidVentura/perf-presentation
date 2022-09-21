@@ -37,8 +37,8 @@
                   ![](img/optimization_before.png)
 
                   Note:
-		  In green: what we want to do. can't be optimized away.
-		  In yellow/orange: tasks that _must_ be done to achieve the goal.
+                  In green: what we want to do. can't be optimized away.
+                  In yellow/orange: tasks that _must_ be done to achieve the goal.
 
           </textarea>
         </section>
@@ -52,7 +52,7 @@
                   a better price in the same amnt of time, or reduce the time it takes
                   to publish the price
 
-		  we don't do this by maximizing peak performance
+  we don't do this by maximizing peak performance
 
           </textarea>
         </section>
@@ -62,14 +62,17 @@
                   ![](img/boosting.png)
 
                   Note:
-		  There are reasons for which running our compute at
-		  100% capacity will end up with jittery behavior
-		  we attempt to get to the highest performance that does not 
-		  exhibit this behavior
 
-		  even tho the peak perf performs more compute over time
-		  a consistent environment reduces risk and simplifies the
-		  life of the developers
+Unwanted variance in timing or expected performance
+
+There are reasons for which running our compute at
+100% capacity will end up with jittery behavior
+we attempt to get to the highest performance that does not 
+exhibit this behavior
+
+even tho the peak perf performs more compute over time
+a consistent environment reduces risk and simplifies the
+life of the developers
 
           </textarea>
         </section>
@@ -107,7 +110,7 @@
                   This is what the memory layout looks for devices with multiple CPUs
                   like servers
 
-                  *io controller would be attached to each memory controller*
+                  *hanging off the io controller is pci-e*
           </textarea>
         </section>
         <section data-markdown data-separator-notes="Note:">
@@ -116,7 +119,7 @@
 
                   Note:
                   What a server looks like.
-		  Show CPU, memory, nic, disks, numa nodes.
+                  Show CPU, memory, nic, disks, numa nodes.
                   Draw path of IP packet. (cross-numa)
                   Mention interconnect.
                   Mention we put everything in the OS in the slow node
@@ -195,8 +198,8 @@
 
 
                   * By default, the scheduler will move processes around
-		    * higher total system throughput
-		    * at the cost of peak performance for any single process
+                    * higher total system throughput
+                    * at the cost of peak performance for any single process
                     * Cache + data locality implications, interrupted = jitter
 
           </textarea>
@@ -207,7 +210,7 @@
                   ![](img/cpu_pinning.png)
                   Note:
                   * Pinning a single process to a core ensures no interruption + no movement (from scheduler)
-		  * The scheduler-induced pauses go from 1~4ms to 0ms on a pinned process
+                  * The scheduler-induced pauses go from 1~4ms to 0ms on a pinned process
           </textarea>
         </section>
         <section data-markdown data-separator-notes="Note:">
@@ -227,7 +230,7 @@
                   Note:
                   * Steering all IRQs to one core will ensure the others don't have
                     context switches, of course it will deteriorate perf on the sacrifical core
-		  * Pauses up to ~200us disappear
+                  * Pauses up to ~200us disappear
           </textarea>
         </section>
         <section data-markdown data-separator-notes="Note:">
@@ -236,15 +239,10 @@
                   ![](./img/virtual_physical_map.png)
 
                   Note:
-		  For this topic, I'll show a bunch of diagrams with a lot of detail.
-		  The details are not important, you should try to focus only on the idea.
-
                   While applications see a unified, contiguous memory layout
-                  it's not the case. the physical memory is shared
+                  it's not the case. the physical memory is shared and 
                   there is a translation layer, called virtual memory
 
-                  This translation (virtual memory) needs bookkeepping
-                  it is done via a 4 level pointer structure called "page table"
           </textarea>
         </section>
         <section data-markdown data-separator-notes="Note:">
@@ -254,8 +252,8 @@
 
                   Note:
 
-                  the page table structure is not important, only that it takes 4 
-                  *random* memory accesses to locate a physical page
+                  This translation (virtual memory) needs bookkeepping
+                  it is done via a 4 level pointer structure called "page table"
 
                   this happens on _every_ memory access
 
@@ -266,9 +264,9 @@
                   a cache of the virtual address -> physical address mapping
 
                   the TLB is *hardware* and has limited capacity for entries, it can fit
-		  about 1500 pages.
+                  about 1500 pages.
 
-		  The default page size on x86 is 4KB -> 6MB working set memory
+                  The default page size on x86 is 4KB -> 6MB working set memory
                   -> if you can use larger pages, you can cover a bigger region of
                   the physical space with the same amount of entries
 
@@ -339,7 +337,7 @@
                   Note:
 
                   Working with the architecture to minimize overhead, at the cost of
-		  efficiently utilizing resources
+                  efficiently utilizing resources
           </textarea>
         </section>
       </div>
