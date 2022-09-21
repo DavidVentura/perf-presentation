@@ -14,6 +14,9 @@
 
     <!-- Theme used for syntax highlighted code -->
     <link rel="stylesheet" href="plugin/highlight/monokai.css">
+    <style type="text/css">
+       img { max-height: 45vh !important; }
+    </style>
   </head>
   <body>
     <div class="reveal">
@@ -22,13 +25,34 @@
           <textarea data-template>
                   ### Linux tuning intro
                   
+                  * Low latency and why
                   * Peak performance vs consistent performance
-                  * Low latency setup
-                  
+
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### Why low latency
+
+                  ![](img/optimization_before.png)
+
+                  Note:
+		  In green: what we want to do. can't be optimized away.
+		  In yellow/orange: tasks that _must_ be done to achieve the goal.
+
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### Impact of tuning
+                  ![](img/optimization_benefits.png)
+
                   Note:
                   Reducing latency/overhead is relevant because we can calculate
                   a better price in the same amnt of time, or reduce the time it takes
                   to publish the price
+
+		  we don't do this by maximizing peak performance
 
           </textarea>
         </section>
@@ -38,43 +62,15 @@
                   ![](img/boosting.png)
 
                   Note:
+		  There are reasons for which running our compute at
+		  100% capacity will end up with jittery behavior
+		  we attempt to get to the highest performance that does not 
+		  exhibit this behavior
 
-		  Focus on consistent over peak, while bringing
-		  the consistent perf as high as possible
-          </textarea>
-        </section>
-        <section data-markdown data-separator-notes="Note:">
-          <textarea data-template>
-                  ### Why low latency
+		  even tho the peak perf performs more compute over time
+		  a consistent environment reduces risk and simplifies the
+		  life of the developers
 
-		  Diagram of important stuff vs filler = latency
-
-
-                  Note:
-                  Reducing latency/overhead is relevant because we can calculate
-                  a better price in the same amnt of time, or reduce the time it takes
-                  to publish the price
-
-                  on these topics i need to explain first the defaults, to then
-                  show the reasoning behind the changes we do
-          </textarea>
-        </section>
-        <section data-markdown data-separator-notes="Note:">
-          <textarea data-template>
-                  ### Price calc
-                  ![](img/optimization_before.png)
-
-                  Note:
-		  blah
-          </textarea>
-        </section>
-        <section data-markdown data-separator-notes="Note:">
-          <textarea data-template>
-                  ### Price calc
-                  ![](img/optimization_benefits.png)
-
-                  Note:
-		  blah
           </textarea>
         </section>
         <section data-markdown data-separator-notes="Note:">
@@ -150,7 +146,7 @@
                     ## Dealing with NUMA
 
                     * PCI-e bus locality
-                    * Process <-> memory locality
+                    * Process &Leftrightarrow; memory locality
 
                     Note:
                     we enforce minimal amount of cross-node communication, or keep
@@ -210,7 +206,8 @@
                   ### Core isolation
                   ![](img/cpu_pinning.png)
                   Note:
-                  * Pinning a single process to a core ensures no interruption + no movement
+                  * Pinning a single process to a core ensures no interruption + no movement (from scheduler)
+		  * The scheduler-induced pauses go from 1~4ms to 0ms on a pinned process
           </textarea>
         </section>
         <section data-markdown data-separator-notes="Note:">
@@ -230,12 +227,13 @@
                   Note:
                   * Steering all IRQs to one core will ensure the others don't have
                     context switches, of course it will deteriorate perf on the sacrifical core
+		  * Pauses up to ~200us disappear
           </textarea>
         </section>
         <section data-markdown data-separator-notes="Note:">
           <textarea data-template>
                   ### How memory mapping works
-                  ![](./img/virtual-physical-map.png)
+                  ![](./img/virtual_physical_map.png)
 
                   Note:
 		  For this topic, I'll show a bunch of diagrams with a lot of detail.
@@ -252,7 +250,7 @@
         <section data-markdown data-separator-notes="Note:">
           <textarea data-template>
                   ### Memory mapping: Page table
-                  ![](./img/pt.svg)
+                  ![](./img/page_table.png)
 
                   Note:
 
@@ -263,19 +261,6 @@
 
                   which is 360-600ns
 
-                Page Global Directory (PGD)
-                Page Upper Directory (PUD)
-                Page Middle Directory (PMD)
-                Page Table Entry directory (PTE)
-
-          </textarea>
-        </section>
-        <section data-markdown data-separator-notes="Note:">
-          <textarea data-template>
-                  ### Memory mapping: TLB
-                  ![](./img/tlb.png)
-
-                  Note:
                   To prevent those 4 random accesses on every page table lookup
                   there's the TLB (translation lookaside buffer) which is basically
                   a cache of the virtual address -> physical address mapping
@@ -322,7 +307,7 @@
         <section data-markdown data-separator-notes="Note:">
           <textarea data-template>
                   ## Standard networking
-                  ![](./img/kernelspace.svg)
+                  ![](./img/kernel_space.png)
 
           </textarea>
         </section>
@@ -330,7 +315,7 @@
           <textarea data-template>
                   ## Userspace networking
 
-                  ![](./img/userspace.svg)
+                  ![](./img/userspace.png)
 
 
                   Note:
