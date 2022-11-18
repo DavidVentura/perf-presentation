@@ -25,14 +25,25 @@
           <textarea data-template>
                   ### Linux tuning intro
                   
-                  * Low latency and why
-                  * Peak performance vs consistent performance
+                  * Bit of theory
+                  * Poking at a server
+                  * Another bit of theory
 
           </textarea>
         </section>
         <section data-markdown data-separator-notes="Note:">
           <textarea data-template>
-                  ### Why low latency
+                  ### Main topics
+                  
+                  * Low latency and why it matters
+                  * Peak vs consistent performance
+                  * Designing with the hardware in mind
+
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### Why low latency matters
 
                   ![](img/optimization_before.png)
 
@@ -44,7 +55,7 @@
         </section>
         <section data-markdown data-separator-notes="Note:">
           <textarea data-template>
-                  ### Impact of tuning
+                  ### Why low latency matters
                   ![](img/optimization_benefits.png)
 
                   Note:
@@ -53,26 +64,6 @@
                   to publish the price
 
   we don't do this by maximizing peak performance
-
-          </textarea>
-        </section>
-        <section data-markdown data-separator-notes="Note:">
-          <textarea data-template>
-                  ### Jitter
-                  ![](img/boosting.png)
-
-                  Note:
-
-Unwanted variance in timing or expected performance
-
-There are reasons for which running our compute at
-100% capacity will end up with jittery behavior
-we attempt to get to the highest performance that does not 
-exhibit this behavior
-
-even tho the peak perf performs more compute over time
-a consistent environment reduces risk and simplifies the
-life of the developers
 
           </textarea>
         </section>
@@ -192,6 +183,26 @@ life of the developers
         </section>
         <section data-markdown data-separator-notes="Note:">
           <textarea data-template>
+                  ### Jitter
+                  ![](img/boosting.png)
+
+                  Note:
+
+Unwanted variance in timing or expected performance
+
+There are reasons for which running our compute at
+100% capacity will end up with jittery behavior
+we attempt to get to the highest performance that does not 
+exhibit this behavior
+
+even tho the peak perf performs more compute over time
+a consistent environment reduces risk and simplifies the
+life of the developers
+
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
                   ### Process scheduling
                   ![](img/no-cpu_pinning.png)
                   Note:
@@ -201,6 +212,7 @@ life of the developers
                     * higher total system throughput
                     * at the cost of peak performance for any single process
                     * Cache + data locality implications, interrupted = jitter
+                  * We can minimize this by disabling the scheduler on cores
 
           </textarea>
         </section>
@@ -211,6 +223,12 @@ life of the developers
                   Note:
                   * Pinning a single process to a core ensures no interruption + no movement (from scheduler)
                   * The scheduler-induced pauses go from 1~4ms to 0ms on a pinned process
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### Core isolation
+                  The scheduler-induced pauses (1~4ms) disappear
           </textarea>
         </section>
         <section data-markdown data-separator-notes="Note:">
@@ -230,12 +248,19 @@ life of the developers
                   Note:
                   * Steering all IRQs to one core will ensure the others don't have
                     context switches, of course it will deteriorate perf on the sacrifical core
-                  * Pauses up to ~200us disappear
           </textarea>
         </section>
         <section data-markdown data-separator-notes="Note:">
           <textarea data-template>
-                  ### How memory mapping works
+                  ### IRQ Steering
+                  * Pauses up to ~200μs disappear
+                  * No context switches
+                  * Performance deteriorates on the sacrifical core
+          </textarea>
+        </section>
+        <section data-markdown data-separator-notes="Note:">
+          <textarea data-template>
+                  ### Memory mapping
                   ![](./img/virtual_physical_map.png)
 
                   Note:
@@ -276,15 +301,21 @@ life of the developers
 
         <section data-markdown data-separator-notes="Note:">
           <textarea data-template>
-                  ### Memory mapping: Huge pages
+                  ### Huge pages
+                  Increasing system-wide page size (2MB or 1GB)
 
-                  * Pages are 2MB or 1GB instead of 4KB
+                  * Fewer allocations
+                  * TLB entries cover more backing memory
+
 
                   Note:
+                  * Fewer allocations
+                  * Fewer TLB entries == fewer misses (up to 600ns each!)
+                      * 1500 pages x 4KB = 6MB
+                      * 1500 pages x 2MB = 3GB
+                      * 1500 pages x 1GB = 15TB
 
-                  * Significantly fewer allocation requests to the kernel
-                  * the biggest reason is to alleviate the TLB
-                  * 1500 pages x 4kb = 6MB, 1500 pages x 2MB = 3GB
+                  * Pages are 2MB or 1GB instead of 4KB
                   * Pinned to the same NUMA node
 
           </textarea>
